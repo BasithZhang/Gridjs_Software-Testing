@@ -7,7 +7,12 @@
     "start": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy"
+    "deploy": "docusaurus deploy",
+
+    "test": "playwright test",
+    "test:list": "playwright test --list",
+    "test:ui": "playwright test --ui",
+    "show-report": "playwright show-report"
   },
   "dependencies": {
     "@docusaurus/core": "^2.2.0",
@@ -25,18 +30,11 @@
     "react-dom": "^17.0.2"
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "production": [">0.2%","not dead","not op_mini all"],
+    "development": ["last 1 chrome version","last 1 firefox version","last 1 safari version"]
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/faker": "^5.5.6"
   }
 }
