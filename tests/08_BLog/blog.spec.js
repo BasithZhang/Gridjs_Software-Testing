@@ -171,4 +171,231 @@ test.describe("Clicks all links on the blog post page: Grid.js v3", async () => 
         await newPage.waitForLoadState();
         await expect(newPage).toHaveURL("https://lerna.js.org/");
     });
+
+    test("4. Older post Hello, World!", async ({ page }) => {
+        const link = page.getByRole("link", {
+            name: "Older Post Hello, World! »",
+        });
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL("http://localhost:3000/blog/hello-world");
+    });
+
+    test("5. Hello, World! on left side", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Hello, World!" }).nth(1);
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL("http://localhost:3000/blog/hello-world");
+    });
+
+    test("6. Selection plugin on right side", async ({ page }) => {
+        const link = page.getByRole("link", {
+            name: "Selection plugin",
+            exact: true,
+        });
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL(
+            "http://localhost:3000/blog/gridjs-v3#selection-plugin",
+        );
+    });
+
+    test("7. Lerna on right side", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Lerna" }).nth(1);
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL(
+            "http://localhost:3000/blog/gridjs-v3#lerna",
+        );
+    });
+
+    test("6. Table width algorithm on right side", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Table width algorithm" });
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL(
+            "http://localhost:3000/blog/gridjs-v3#table-width-algorithm",
+        );
+    });
+
+    test("7. announcements", async ({ page }) => {
+        const link = page.getByRole("link", { name: "announcements" }).first();
+        await expect(link).toBeVisible();
+        await link.click();
+
+        await expect(page).toHaveURL(
+            "http://localhost:3000/blog/tags/announcements",
+        );
+
+        // Grab the title: " 2 posts tagged with "announcements" "
+        const title = page.getByRole("heading", {
+            name: '2 posts tagged with "announcements"',
+            level: 1,
+        });
+        await expect(title).toHaveText('2 posts tagged with "announcements"');
+
+        // test for more: "View All Tags"
+        const tagsLink = page.getByRole("link", { name: "View All Tags" });
+        await expect(tagsLink).toBeVisible();
+        await tagsLink.click();
+        await expect(page).toHaveURL("http://localhost:3000/blog/tags");
+
+        // Grab the h1 title "Tags"
+        const tagsTitle = page.getByRole("heading", { name: "Tags", level: 1 });
+        await expect(tagsTitle).toBeVisible();
+        await expect(tagsTitle).toHaveText("Tags");
+
+        // Grab the h2 title "A"
+        const h2Title = page.getByRole("heading", { name: "A", level: 2 });
+        await expect(h2Title).toBeVisible();
+        await expect(h2Title).toHaveText("A");
+    });
+});
+
+test.describe("All links on the blog page", async () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto("http://localhost:3000/blog");
+    });
+
+    test("1. NPM link on the upper right corner", async ({ page }) => {
+        const link = page.getByRole("link", { name: "NPM" });
+        await expect(link).toBeVisible();
+        await link.click();
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL("https://www.npmjs.com/package/gridjs");
+    });
+
+    test("2. Github link on the upper right corner", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Github" }).first();
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+
+        await expect(newPage).toHaveURL("https://github.com/grid-js/gridjs");
+    });
+
+    // 3, 4 for Docs section on the bottom of the blog page
+    test("3. Docs - Getting Started", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Getting Started" });
+        await expect(link).toBeVisible();
+
+        await link.click();
+        await expect(page).toHaveURL("http://localhost:3000/docs");
+    });
+
+    test("4. Docs - Examples", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Examples" }).nth(1);
+        await expect(link).toBeVisible();
+
+        await link.click();
+        await expect(page).toHaveURL(
+            "http://localhost:3000/docs/examples/hello-world",
+        );
+    });
+
+    // 5 - 7 for the Community section
+    test("5. Community - Stack Overflow", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Stack Overflow" });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL(
+            "https://stackoverflow.com/questions/tagged/gridjs",
+        );
+    });
+
+    test("6. Community - Discord", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Discord" });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL("https://discord.com/invite/K55BwDY");
+    });
+
+    test("7. Community - Twitter", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Twitter" });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL("https://x.com/grid_js");
+    });
+
+    // 8, 9 for the More section
+    test("8. More - Blog", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Blog" }).nth(1);
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL("http://localhost:3000/blog");
+    });
+
+    test("9. More - Github", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Github" }).nth(1);
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+
+        await expect(newPage).toHaveURL("https://github.com/grid-js/gridjs");
+    });
+});
+
+// test for the color theme switch function
+test.describe("Test for the color theme switch function", async () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto("http://localhost:3000/blog");
+
+        // force the website to be light mode initially
+        await page.emulateMedia({ colorScheme: "light" });
+    });
+
+    test("Switch to dark mode", async ({ page }) => {
+        const htmlTag = page.locator("html");
+        await expect(htmlTag).toHaveAttribute("data-theme", "light");
+
+        const toggleButton = page.getByRole("button", {
+            name: "Switch between dark and light mode (currently light mode)",
+        });
+        await expect(toggleButton).toBeVisible();
+        await expect(toggleButton).toHaveAttribute(
+            "aria-label",
+            "Switch between dark and light mode (currently dark mode)",
+        );
+
+        await toggleButton.click();
+
+        await expect(htmlTag).toHaveAttribute("data-theme", "dark");
+        await expect(toggleButton).toHaveAttribute(
+            "aria-label",
+            "Switch between dark and light mode (currently dark mode)",
+        );
+    });
 });
