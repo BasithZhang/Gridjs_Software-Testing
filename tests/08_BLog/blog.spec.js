@@ -369,7 +369,7 @@ test.describe("All links on the blog page", async () => {
 });
 
 // test for the color theme switch function
-test.describe.only("Test for the color theme switch function", async () => {
+test.describe("Test for the color theme switch function", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("http://localhost:3000/blog");
 
