@@ -369,7 +369,7 @@ test.describe("All links on the blog page", async () => {
 });
 
 // test for the color theme switch function
-test.describe("Test for the color theme switch function", async () => {
+test.describe.only("Test for the color theme switch function", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("http://localhost:3000/blog");
 
@@ -377,17 +377,24 @@ test.describe("Test for the color theme switch function", async () => {
         await page.emulateMedia({ colorScheme: "light" });
     });
 
+    //TODO: Implement the test for the color theme switch function
+    test("Ensure that initialized color scheme is light", async ({ page }) => {
+        const htmlTag = page.locator("html");
+        await expect(htmlTag).toHaveAttribute("data-theme", "light");
+    });
+
     test("Switch to dark mode", async ({ page }) => {
         const htmlTag = page.locator("html");
         await expect(htmlTag).toHaveAttribute("data-theme", "light");
 
+        // Regex expression ot match the button aria-label after switched to dark mode
         const toggleButton = page.getByRole("button", {
-            name: "Switch between dark and light mode (currently light mode)",
+            name: /Switch between dark and light mode/i,
         });
         await expect(toggleButton).toBeVisible();
         await expect(toggleButton).toHaveAttribute(
             "aria-label",
-            "Switch between dark and light mode (currently dark mode)",
+            "Switch between dark and light mode (currently light mode)",
         );
 
         await toggleButton.click();
@@ -396,6 +403,38 @@ test.describe("Test for the color theme switch function", async () => {
         await expect(toggleButton).toHaveAttribute(
             "aria-label",
             "Switch between dark and light mode (currently dark mode)",
+        );
+    });
+
+    test("Switch back to light mode", async ({ page }) => {
+        const htmlTag = page.locator("html");
+        await expect(htmlTag).toHaveAttribute("data-theme", "light");
+
+        // First, switch color scheme to dark mode
+        const toggleButton = page.getByRole("button", {
+            name: /Switch between dark and light mode/i,
+        });
+        await expect(toggleButton).toBeVisible();
+        await expect(toggleButton).toHaveAttribute(
+            "aria-label",
+            "Switch between dark and light mode (currently light mode)",
+        );
+
+        await toggleButton.click();
+
+        await expect(htmlTag).toHaveAttribute("data-theme", "dark");
+        await expect(toggleButton).toHaveAttribute(
+            "aria-label",
+            "Switch between dark and light mode (currently dark mode)",
+        );
+
+        // Click again to switch back to light mode
+        await toggleButton.click();
+
+        await expect(htmlTag).toHaveAttribute("data-theme", "light");
+        await expect(toggleButton).toHaveAttribute(
+            "aria-label",
+            "Switch between dark and light mode (currently light mode)",
         );
     });
 });
