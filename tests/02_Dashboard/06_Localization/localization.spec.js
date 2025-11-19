@@ -302,3 +302,34 @@ test.describe("Scrolling test", async () => {
 });
 
 // TODO: The table in the "Installing a Locale" section also has the same issue as the homepage one!
+test.describe("Test for the sorting bug", async () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(url);
+        await expect(page).toHaveURL(
+            "http://localhost:3000/docs/localization/locales",
+        );
+    });
+
+    // ^ - toward, oppsite is backward
+    // 1. Click the button that toggle to last page of the table (10 and Suivant both worked)
+    // 2. Click the sorting button (default goes toward), this bug worked on Names, Email, and Title sections
+    // 3. Click the button that goes the first page of table, and the bug shows up
+    // The Bug is: When click to the page 10, and then click sort button, and it will show the content after sorting at the page 10
+    // But the after show the content of page 10, it goes back to page 1, and the content on the page 1 is still the content on page 10
+    /*
+    test("Test for click page 1 and 10 button", async({page}) => {
+        const lastPage = page.getByRole("button", { name: "Page 10" });
+        await expect(lastPage).toBeVisible();
+
+        await lastPage.click();
+        const pageNum = page.getByRole("generic").filter({ hasText: "sur" });
+        await expect(pageNum).toHaveText("50");
+
+        const sortButton = page.getByRole("button", { name: "Trier la colonne dans l'ordre croissant" });
+        await expect(sortButton).toBeVisible();
+
+        await sortButton.click();
+
+    })
+    */
+});
