@@ -77,7 +77,7 @@ test.describe("Grab titles in the Localization page", () => {
     });
 });
 
-test.describe.only("Check the links in the localozation page", async () => {
+test.describe("Check the links in the localozation page", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
         await expect(page).toHaveURL(url);
