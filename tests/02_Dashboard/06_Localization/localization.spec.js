@@ -135,6 +135,170 @@ test.describe("Check the links in the localozation page", async () => {
             "http://localhost:3000/docs/examples/hello-world",
         );
     });
+
+    test("Check the link in the Note section: https://unpkg.com/gridjs/l10n/dist/l10n.umd.js", async ({
+        page,
+    }) => {
+        const link = page.getByRole("link", {
+            name: "https://unpkg.com/gridjs/l10n/dist/l10n.umd.js",
+        });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+
+        await expect(newPage).toHaveURL(
+            "https://unpkg.com/gridjs@6.2.0/l10n/dist/l10n.umd.js",
+        );
+    });
+});
+
+test.describe("All links on the Locales page", async () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto("http://localhost:3000/docs/localization/locales");
+    });
+
+    test("1. NPM link on the upper right corner", async ({ page }) => {
+        const link = page.getByRole("link", { name: "NPM" });
+        await expect(link).toBeVisible();
+        await link.click();
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL("https://www.npmjs.com/package/gridjs");
+    });
+
+    test("2. Github link on the upper right corner", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Github" }).first();
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+
+        await expect(newPage).toHaveURL("https://github.com/grid-js/gridjs");
+    });
+
+    // 3, 4 for Docs section on the bottom of the blog page
+    test("3. Docs - Getting Started", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Getting Started" });
+        await expect(link).toBeVisible();
+
+        await link.click();
+        await expect(page).toHaveURL("http://localhost:3000/docs");
+    });
+
+    test("4. Docs - Examples", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Examples" }).nth(2);
+        await expect(link).toBeVisible();
+
+        await link.click();
+        await expect(page).toHaveURL(
+            "http://localhost:3000/docs/examples/hello-world",
+        );
+    });
+
+    // 5 - 7 for the Community section
+    test("5. Community - Stack Overflow", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Stack Overflow" });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL(
+            "https://stackoverflow.com/questions/tagged/gridjs",
+        );
+    });
+
+    test("6. Community - Discord", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Discord" });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL("https://discord.com/invite/K55BwDY");
+    });
+
+    test("7. Community - Twitter", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Twitter" });
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+        await expect(newPage).toHaveURL("https://x.com/grid_js");
+    });
+
+    // 8, 9 for the More section
+    test("8. More - Blog", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Blog" }).nth(1);
+        await expect(link).toBeVisible();
+        await link.click();
+        await expect(page).toHaveURL("http://localhost:3000/blog");
+    });
+
+    test("9. More - Github", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Github" }).nth(1);
+        await expect(link).toBeVisible();
+
+        const [newPage] = await Promise.all([
+            page.context().waitForEvent("page"),
+            link.click(),
+        ]);
+
+        await newPage.waitForLoadState();
+
+        await expect(newPage).toHaveURL("https://github.com/grid-js/gridjs");
+    });
+});
+
+test.describe("Scrolling test", async () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(url);
+        await expect(page).toHaveURL(
+            "http://localhost:3000/docs/localization/locales",
+        );
+    });
+
+    test("Test for the button that scoll to the top of page", async ({
+        page,
+    }) => {
+        await page.keyboard.press("End");
+        await page.waitForTimeout(500);
+
+        await page.mouse.wheel(0, -300);
+
+        // Now the button should appear
+        const button = page.getByRole("button", { name: "Scroll back to top" });
+        await expect(button).toBeVisible();
+
+        await button.click();
+        await page.waitForTimeout(500);
+
+        const curr_y = await page.evaluate(() => window.scrollY);
+        expect(curr_y).toBe(0);
+    });
 });
 
 // TODO: The table in the "Installing a Locale" section also has the same issue as the homepage one!
