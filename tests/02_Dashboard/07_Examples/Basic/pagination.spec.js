@@ -81,7 +81,7 @@ test.describe("All links on the blog page", async () => {
     });
 
     test("4. Docs - Examples", async ({ page }) => {
-        const link = page.getByRole("link", { name: "Examples" }).nth(1);
+        const link = page.getByRole("link", { name: "Examples" }).nth(2);
         await expect(link).toBeVisible();
 
         await link.click();

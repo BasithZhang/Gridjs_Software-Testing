@@ -8,9 +8,9 @@ test.describe("Grab the title", async () => {
         await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: Custom HTTP clinet", async ({ page }) => {
+    test("1. Grab the h1 title: Custom HTTP client", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "Custom HTTP clinet",
+            name: "Custom HTTP client",
             level: 1,
         });
         await expect(title).toBeVisible();
@@ -61,7 +61,7 @@ test.describe("All links on the blog page", async () => {
     });
 
     test("4. Docs - Examples", async ({ page }) => {
-        const link = page.getByRole("link", { name: "Examples" }).nth(1);
+        const link = page.getByRole("link", { name: "Examples" }).nth(2);
         await expect(link).toBeVisible();
 
         await link.click();

@@ -8,14 +8,14 @@ test.describe("UI testing", async () => {
         await expect(page).toHaveURL(url);
     });
 
-    test("Grab the h1 title: Custom Sort", async ({ page }) => {
+    test("Grab the h1 title: Custom sort", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "Custom Sort",
+            name: "Custom sort",
             level: 1,
         });
         await expect(title).toBeVisible();
 
-        await expect(title).toHaveText("Custom Sort");
+        await expect(title).toHaveText("Custom sort");
     });
 
     test("Check the home page link", async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe("All links on the blog page", async () => {
     });
 
     test("4. Docs - Examples", async ({ page }) => {
-        const link = page.getByRole("link", { name: "Examples" }).nth(1);
+        const link = page.getByRole("link", { name: "Examples" }).nth(2);
         await expect(link).toBeVisible();
 
         await link.click();
