@@ -27,15 +27,6 @@ test.describe("UI testing", async () => {
         await expect(page).toHaveURL("http://localhost:3000");
     });
 
-    // TODO: test the functionality by set the value of pagination to true and false
-});
-
-test.describe("API testing", async () => {
-    test.beforeEach(async ({ page }) => {
-        await page.goto(url);
-        await expect(page).toHaveURL(url);
-    });
-
     test("When pagination is set to true", async ({ page }) => {
         // Previous and Next page button should be exist
         const previous = page.getByRole("button", { name: "Previous" }).nth(1);

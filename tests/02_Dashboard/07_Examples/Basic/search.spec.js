@@ -23,13 +23,6 @@ test.describe("UI testing", async () => {
 
         await expect(page).toHaveURL("http://localhost:3000");
     });
-});
-
-test.describe("API testing", async () => {
-    test.beforeEach(async ({ page }) => {
-        await page.goto(url);
-        await expect(page).toHaveURL(url);
-    });
 
     test("When search is set to true", async ({ page }) => {
         // The search box should be exist
