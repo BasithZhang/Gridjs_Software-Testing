@@ -25,31 +25,97 @@ test.describe("UI testing", async () => {
     });
 
     test("When search is set to true", async ({ page }) => {
-        // The search box should be exist
-        const box = page
-            .getByRole("searchbox", { name: "Type a keyword..." })
-            .first();
-        await expect(box).toBeVisible();
+        const firstGridContainer = page.locator(".gridjs-container").first();
+        const searchInput = firstGridContainer.locator(
+            "input.gridjs-search-input",
+        );
+        const tableBody = firstGridContainer.locator(
+            "table.gridjs-table tbody",
+        );
 
-        // Type a keyword to test thte functionality
-        await box.click();
+        // 1. 確保搜尋框可見
+        await expect(searchInput).toBeVisible();
 
-        await page.keyboard("j"); // fix the keyboard usage
-        // we can find john
-        const john = page.getByRole("gridcell", { name: "John" });
-        await expect(john).toBeVisible();
+        // 2. 輸入 'john' (模擬使用者真實打字行為)
+        await searchInput.fill("john");
 
-        // Mark, Eion and Nisen is filtered
-        const mark = page.getByRole("gridcell", { name: "Mark" });
-        const eion = page.getByRole("gridcell", { name: "Eion" });
-        const nisen = page.getByRole("gridcell", { name: "Nisen" });
+        // 3. 驗證正向結果：應該只剩下一行，且包含 'John'
+        // 注意：Grid.js 搜尋反應很快，Playwright 的 expect 會自動 retry 等待 DOM 變更
+        const rows = tableBody.locator("tr");
+        await expect(rows).toHaveCount(1);
+        await expect(rows.first()).toContainText("John");
 
-        expect(mark).toBeFalsy();
-        expect(eion).toBeFalsy();
-        expect(nisen).toBeFalsy();
+        // 4. 驗證負向結果：確認其他名字已被過濾掉 (Filtered Out)
+        // 我們檢查 tbody 容器內是否"不包含"這些文字
+        await expect(tableBody).not.toContainText("Mark");
+        await expect(tableBody).not.toContainText("Eoin");
+        await expect(tableBody).not.toContainText("Nisen");
+
+        // 替代寫法 (針對特定元素的更嚴格檢查)：
+        // 確保找不到含有這些文字的儲存格
+        await expect(
+            firstGridContainer.getByRole("cell", { name: "Mark" }),
+        ).toBeHidden();
+        await expect(
+            firstGridContainer.getByRole("cell", { name: "Eoin" }),
+        ).toBeHidden();
+        await expect(
+            firstGridContainer.getByRole("cell", { name: "Nisen" }),
+        ).toBeHidden();
     });
 
-    // test("When search is set to false", async ({ page }) => { });
+    test.only("When search is set to false", async ({ page }) => {
+        // 1. 定位編輯器
+        const codeEditor = page
+            .locator("textarea.npm__react-simple-code-editor__textarea")
+            .first();
+
+        // 2. 準備程式碼
+        // 我們將代碼拆成兩部分：「主體」與「結尾字符」
+        // 這樣做的目的是讓 Playwright 填入主體後，手動打入最後的字符，確保觸發 Live Editor 的執行事件
+        const codeBody = `
+        const grid = new Grid({
+          columns: ['Name', 'Email', 'Phone Number'],
+          search: false,
+          data: [
+            ['John', 'john@example.com', '(353) 01 222 3333'],
+            ['Mark', 'mark@gmail.com', '(01) 22 888 4444'],
+            ['Eoin', 'eo3n@yahoo.com', '(05) 10 878 5554'],
+            ['Nisen', 'nis900@gmail.com', '313 333 1923']
+          ]
+        })`.trim(); // 注意：這裡故意拿掉最後的分號與右括號
+
+        // 3. 操作編輯器
+        await codeEditor.click();
+        await codeEditor.focus();
+
+        // 清空舊內容
+        const modifier = process.platform === "darwin" ? "Meta" : "Control";
+        await page.keyboard.press(`${modifier}+A`);
+        await page.keyboard.press("Backspace");
+
+        // 4. 混合輸入策略
+        // Step A: 使用 fill 快速填入主體 (保持格式整齊，不會觸發自動縮排混亂)
+        await codeEditor.fill(codeBody);
+
+        // Step B: 手動輸入結尾符號 (模擬真實打字，強制觸發編輯器的 Run/Compile)
+        // 我們輸入最後的 "; " (分號與空格)，這能確保語法封閉並觸發更新
+        await codeEditor.type(";", { delay: 100 });
+
+        // 5. 驗證結果
+        const firstGridContainer = page.locator(".gridjs-container").first();
+        const searchInput = firstGridContainer.locator(
+            "input.gridjs-search-input",
+        );
+
+        // 斷言：Search Box 應該消失 (search: false)
+        await expect(searchInput).toBeHidden();
+
+        // 斷言：表格本身應該還在 (確認程式碼有效且已渲染)
+        await expect(
+            firstGridContainer.locator("table.gridjs-table"),
+        ).toBeVisible();
+    });
 });
 
 test.describe("All links on the blog page", async () => {
