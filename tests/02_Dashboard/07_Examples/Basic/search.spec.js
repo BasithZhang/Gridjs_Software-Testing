@@ -64,7 +64,7 @@ test.describe("UI testing", async () => {
         ).toBeHidden();
     });
 
-    test.only("When search is set to false", async ({ page }) => {
+    test("When search is set to false", async ({ page }) => {
         // 1. 定位編輯器
         const codeEditor = page
             .locator("textarea.npm__react-simple-code-editor__textarea")
