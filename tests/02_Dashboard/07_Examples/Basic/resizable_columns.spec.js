@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 const url = "http://localhost:3000/docs/examples/resizable";
 
-test.describe("Grab the title", async () => {
+test.describe("UI testing", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
         await expect(page).toHaveURL(url);
