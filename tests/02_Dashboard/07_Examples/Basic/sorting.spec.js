@@ -1,64 +1,83 @@
 import { test, expect } from "@playwright/test";
 
-const url = "http://localhost:3000/docs/examples/hello-world";
+const url = "http://localhost:3000/docs/examples/sorting";
 
 test.describe("UI testing", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
-        await expect(page).toHaveURL(
-            "http://localhost:3000/docs/examples/hello-world",
-        );
+        await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: Hello, World!", async ({ page }) => {
-        const title = page.getByRole("heading", {
-            name: "Hello, World!",
-            level: 1,
-        });
+    test("Grab the h1 title: Sorting", async ({ page }) => {
+        const title = page.getByRole("heading", { name: "Sorting", level: 1 });
         await expect(title).toBeVisible();
 
-        await expect(title).toHaveText("Hello, World!");
+        await expect(title).toHaveText("Sorting");
     });
 
-    /**
-     * 測試情境 1: 驗證表格結構與標頭
-     * 目標：確保表格欄位名稱 (Columns) 正確顯示
-     */
-    test("Should render table headers correctly", async ({ page }) => {
-        const table = page.locator("table.gridjs-table").first();
+    test("Check the home page link", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Home page" });
+        await expect(link).toBeVisible();
 
-        // 驗證表格可見
-        await expect(table).toBeVisible();
+        await link.click();
 
-        // 驗證標頭文字與順序
-        // 根據官方範例，標頭應為: Name, Email, Phone Number
-        const headers = table.locator("th");
-        await expect(headers).toHaveText(["Name", "Email", "Phone Number"]);
+        await expect(page).toHaveURL("http://localhost:3000");
     });
 
-    /**
-     * 測試情境 2: 驗證資料內容
-     * 目標：檢查表格內的實際資料 (Rows & Cells) 是否與預期相符
-     */
-    test("Should display correct data in rows", async ({ page }) => {
-        const rows = page.locator("table.gridjs-table tbody tr");
+    test("Should sort data correctly (Ascending and Descending)", async ({
+        page,
+    }) => {
+        const container = page.locator(".gridjs-wrapper").first();
+        const rows = container.locator("table.gridjs-table tbody tr");
 
-        // --- 驗證第一筆資料 (John) ---
-        const firstRowCells = rows.nth(0).locator("td");
-        await expect(firstRowCells.nth(0)).toHaveText("John");
-        await expect(firstRowCells.nth(1)).toHaveText("john@example.com");
-        await expect(firstRowCells.nth(2)).toHaveText("(353) 01 222 3333");
+        // 1. 鎖定 "Name" 欄位標頭
+        const nameHeader = container.locator("th", { hasText: "Name" });
 
-        // --- 驗證第二筆資料 (Mark) ---
-        const secondRowCells = rows.nth(1).locator("td");
-        await expect(secondRowCells.nth(0)).toHaveText("Mark");
-        await expect(secondRowCells.nth(1)).toHaveText("mark@gmail.com");
-        await expect(secondRowCells.nth(2)).toHaveText("(01) 22 888 4444");
+        // 2. [修正關鍵] 鎖定標頭內的 "排序按鈕" (根據您的截圖，它是 button.gridjs-sort)
+        const sortButton = nameHeader.locator(".gridjs-sort");
 
-        // (可選) 驗證總筆數，確保沒有多餘或缺少的資料
-        // Hello World 範例通常有 2 筆或更多，視您的版本而定，這裡假設檢查前兩筆
-        await expect(rows.nth(0)).toBeVisible();
-        await expect(rows.nth(1)).toBeVisible();
+        // 確保按鈕存在
+        await expect(sortButton).toBeVisible();
+
+        // --- Step 1: 測試升冪排序 (Ascending) ---
+
+        // 點擊排序按鈕
+        await sortButton.click();
+
+        // [修正關鍵] 驗證 "按鈕" 的 class 是否變為 asc
+        // 根據截圖，成功排序後 class 會包含 "gridjs-sort-asc"
+        await expect(sortButton).toHaveClass(/gridjs-sort-asc/);
+
+        // 抓取資料並驗證
+        const namesAsc = await rows
+            .locator("td")
+            .nth(0)
+            .evaluateAll((cells) => cells.map((cell) => cell.innerText));
+        console.log("Ascending Result:", namesAsc);
+
+        const expectedAsc = [...namesAsc].sort((a, b) => a.localeCompare(b));
+        expect(namesAsc).toEqual(expectedAsc);
+
+        // --- Step 2: 測試降冪排序 (Descending) ---
+
+        // 再次點擊同一個排序按鈕
+        await sortButton.click();
+
+        // [修正關鍵] 驗證 "按鈕" 的 class 是否變為 desc
+        // 通常 Grid.js 的命名規則是 gridjs-sort-desc
+        await expect(sortButton).toHaveClass(/gridjs-sort-desc/);
+
+        // 抓取資料並驗證
+        const namesDesc = await rows
+            .locator("td")
+            .nth(0)
+            .evaluateAll((cells) => cells.map((cell) => cell.innerText));
+        console.log("Descending Result:", namesDesc);
+
+        const expectedDesc = [...namesDesc]
+            .sort((a, b) => a.localeCompare(b))
+            .reverse();
+        expect(namesDesc).toEqual(expectedDesc);
     });
 });
 

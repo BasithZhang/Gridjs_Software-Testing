@@ -1,64 +1,89 @@
 import { test, expect } from "@playwright/test";
 
-const url = "http://localhost:3000/docs/examples/hello-world";
+const url = "http://localhost:3000/docs/examples/wide-table";
+
+const expectedHeaders = [
+    "Name",
+    "Email",
+    "Title",
+    "Company",
+    "Country",
+    "County",
+];
 
 test.describe("UI testing", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
-        await expect(page).toHaveURL(
-            "http://localhost:3000/docs/examples/hello-world",
-        );
+        await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: Hello, World!", async ({ page }) => {
+    test("1. Grab the h1 title: Wide Table", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "Hello, World!",
+            name: "Wide Table",
             level: 1,
         });
         await expect(title).toBeVisible();
 
-        await expect(title).toHaveText("Hello, World!");
+        await expect(title).toHaveText("Wide Table");
     });
 
     /**
-     * 測試情境 1: 驗證表格結構與標頭
-     * 目標：確保表格欄位名稱 (Columns) 正確顯示
+     * 測試情境 1: 驗證所有欄位標頭 (Headers) 是否存在於 DOM 中
+     * 重點：驗證欄位數量與名稱完全符合預期
      */
-    test("Should render table headers correctly", async ({ page }) => {
-        const table = page.locator("table.gridjs-table").first();
+    test("Should render all column headers correctly", async ({ page }) => {
+        // [修正點 1] 先鎖定第一個 wrapper，再找裡面的 th
+        // 這樣就不會抓到第二個表格的標頭
+        const headerCells = page
+            .locator(".gridjs-wrapper")
+            .first()
+            .locator("thead th");
 
-        // 驗證表格可見
-        await expect(table).toBeVisible();
+        // 1. 驗證欄位總數
+        // 現在 headerCells 只會包含第一個表格的標頭，數量應該會正確
+        await expect(headerCells).toHaveCount(expectedHeaders.length);
 
-        // 驗證標頭文字與順序
-        // 根據官方範例，標頭應為: Name, Email, Phone Number
-        const headers = table.locator("th");
-        await expect(headers).toHaveText(["Name", "Email", "Phone Number"]);
+        // 2. 驗證所有欄位名稱
+        await expect(headerCells).toHaveText(expectedHeaders);
     });
 
     /**
-     * 測試情境 2: 驗證資料內容
-     * 目標：檢查表格內的實際資料 (Rows & Cells) 是否與預期相符
+     * 測試情境 2: 驗證水平捲動行為 (Horizontal Scroll)
+     * 重點：寬表格應該要有捲軸，且最後一個欄位初始狀態可能在視窗外
      */
-    test("Should display correct data in rows", async ({ page }) => {
-        const rows = page.locator("table.gridjs-table tbody tr");
+    test("Should handle horizontal scrolling for wide columns", async ({
+        page,
+    }) => {
+        // 鎖定表格的外層容器 (Grid.js 通常使用 gridjs-wrapper 來處理捲動)
+        const tableWrapper = page.locator(".gridjs-wrapper").first();
+        const lastColumnHeader = page
+            .locator("table.gridjs-table thead th")
+            .last();
 
-        // --- 驗證第一筆資料 (John) ---
-        const firstRowCells = rows.nth(0).locator("td");
-        await expect(firstRowCells.nth(0)).toHaveText("John");
-        await expect(firstRowCells.nth(1)).toHaveText("john@example.com");
-        await expect(firstRowCells.nth(2)).toHaveText("(353) 01 222 3333");
+        // 1. 驗證容器是否"需要"捲動 (內容寬度 > 容器寬度)
+        // 我們使用 evaluate 來檢查 DOM 屬性
+        const isScrollable = await tableWrapper.evaluate((el) => {
+            return el.scrollWidth > el.clientWidth;
+        });
 
-        // --- 驗證第二筆資料 (Mark) ---
-        const secondRowCells = rows.nth(1).locator("td");
-        await expect(secondRowCells.nth(0)).toHaveText("Mark");
-        await expect(secondRowCells.nth(1)).toHaveText("mark@gmail.com");
-        await expect(secondRowCells.nth(2)).toHaveText("(01) 22 888 4444");
+        // 如果是寬表格，這裡必須為 true
+        expect(isScrollable).toBeTruthy();
 
-        // (可選) 驗證總筆數，確保沒有多餘或缺少的資料
-        // Hello World 範例通常有 2 筆或更多，視您的版本而定，這裡假設檢查前兩筆
-        await expect(rows.nth(0)).toBeVisible();
-        await expect(rows.nth(1)).toBeVisible();
+        // 2. 驗證最後一個欄位 (Country) 的可見性
+        // 在捲動之前，最後一個欄位可能不在視口內 (視您的螢幕寬度而定)
+        // 為了測試穩健性，我們先強制將容器捲動到最右邊
+        await tableWrapper.evaluate((el) => {
+            el.scrollLeft = el.scrollWidth;
+        });
+
+        // 3. 斷言：捲動後，最後一個欄位應該要是可見的 (Visible)
+        // 注意：Playwright 的 toBeVisible 會檢查元素是否在 viewport 內
+        await expect(lastColumnHeader).toBeVisible();
+
+        // 再次確認它是我們預期的最後一個欄位
+        await expect(lastColumnHeader).toHaveText(
+            expectedHeaders[expectedHeaders.length - 1],
+        );
     });
 });
 

@@ -1,64 +1,87 @@
 import { test, expect } from "@playwright/test";
 
-const url = "http://localhost:3000/docs/examples/hello-world";
+const url = "http://localhost:3000/docs/examples/resizable";
 
-test.describe("UI testing", async () => {
+test.describe("Grab the title", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
-        await expect(page).toHaveURL(
-            "http://localhost:3000/docs/examples/hello-world",
-        );
+        await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: Hello, World!", async ({ page }) => {
+    test("1. Grab the h1 title: Resizable columns", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "Hello, World!",
+            name: "Resizable columns",
             level: 1,
         });
         await expect(title).toBeVisible();
 
-        await expect(title).toHaveText("Hello, World!");
+        await expect(title).toHaveText("Resizable columns");
     });
 
-    /**
-     * 測試情境 1: 驗證表格結構與標頭
-     * 目標：確保表格欄位名稱 (Columns) 正確顯示
-     */
-    test("Should render table headers correctly", async ({ page }) => {
-        const table = page.locator("table.gridjs-table").first();
+    test("Should resize column width when dragged", async ({ page }) => {
+        // 1. 鎖定目標欄位 (Email)
+        // 我們使用 first() 確保只操作第一個表格
+        const emailHeader = page
+            .locator("th")
+            .filter({ hasText: "Email" })
+            .first();
 
-        // 驗證表格可見
-        await expect(table).toBeVisible();
+        // 2. 鎖定該欄位內部的"調整手柄"
+        // Grid.js 的實作中，這是 th 內部的一個 div，class 通常為 .gridjs-resizable
+        const resizerHandle = emailHeader.locator(".gridjs-resizable");
 
-        // 驗證標頭文字與順序
-        // 根據官方範例，標頭應為: Name, Email, Phone Number
-        const headers = table.locator("th");
-        await expect(headers).toHaveText(["Name", "Email", "Phone Number"]);
-    });
+        // 確保手柄存在 (有些情況下如果沒設定 resizable: true 就不會有這個元素)
+        await expect(resizerHandle).toBeVisible();
 
-    /**
-     * 測試情境 2: 驗證資料內容
-     * 目標：檢查表格內的實際資料 (Rows & Cells) 是否與預期相符
-     */
-    test("Should display correct data in rows", async ({ page }) => {
-        const rows = page.locator("table.gridjs-table tbody tr");
+        // 3. 取得初始寬度 (Initial Width)
+        // 使用 boundingBox() 取得元素的精確幾何資訊
+        const initialBox = await emailHeader.boundingBox();
+        if (!initialBox) throw new Error("Cannot get initial bounding box");
 
-        // --- 驗證第一筆資料 (John) ---
-        const firstRowCells = rows.nth(0).locator("td");
-        await expect(firstRowCells.nth(0)).toHaveText("John");
-        await expect(firstRowCells.nth(1)).toHaveText("john@example.com");
-        await expect(firstRowCells.nth(2)).toHaveText("(353) 01 222 3333");
+        // 4. 取得手柄的座標，準備進行拖曳
+        const resizerBox = await resizerHandle.boundingBox();
+        if (!resizerBox) throw new Error("Cannot get resizer bounding box");
 
-        // --- 驗證第二筆資料 (Mark) ---
-        const secondRowCells = rows.nth(1).locator("td");
-        await expect(secondRowCells.nth(0)).toHaveText("Mark");
-        await expect(secondRowCells.nth(1)).toHaveText("mark@gmail.com");
-        await expect(secondRowCells.nth(2)).toHaveText("(01) 22 888 4444");
+        // 計算拖曳的起點 (Start Point): 手柄的中心點
+        const startX = resizerBox.x + resizerBox.width / 2;
+        const startY = resizerBox.y + resizerBox.height / 2;
 
-        // (可選) 驗證總筆數，確保沒有多餘或缺少的資料
-        // Hello World 範例通常有 2 筆或更多，視您的版本而定，這裡假設檢查前兩筆
-        await expect(rows.nth(0)).toBeVisible();
-        await expect(rows.nth(1)).toBeVisible();
+        // 定義拖曳距離 (向右拖 100px)
+        const dragDistance = 100;
+
+        // 5. 執行滑鼠拖曳模擬 (Mouse Simulation)
+        // Playwright 的 dragTo 有時對這種細微 UI 操作不夠精確，我們使用 mouse API 手動控制
+
+        // a. 移動到手柄位置
+        await page.mouse.move(startX, startY);
+
+        // b. 按下滑鼠左鍵 (Mouse Down)
+        await page.mouse.down();
+
+        // c. 移動滑鼠 (Mouse Move) - 模擬拖曳過程
+        // 建議分段移動或直接移動到終點
+        await page.mouse.move(startX + dragDistance, startY, { steps: 5 }); // steps: 5 讓移動稍微平滑一點
+
+        // d. 放開滑鼠 (Mouse Up)
+        await page.mouse.up();
+
+        // 6. 取得最終寬度 (Final Width)
+        // 等待一點點時間讓 DOM 完成重繪 (雖然通常是同步的，但在測試中加上 waitForTimeout 比較穩健)
+        // await page.waitForTimeout(100);
+        const finalBox = await emailHeader.boundingBox();
+        if (!finalBox) throw new Error("Cannot get final bounding box");
+
+        // 7. 驗證結果
+        // 最終寬度應該大於初始寬度 (考慮到一點點誤差，我們預期它至少增加 50px 以上)
+        console.log(
+            `Initial Width: ${initialBox.width}, Final Width: ${finalBox.width}`,
+        );
+
+        expect(finalBox.width).toBeGreaterThan(initialBox.width);
+
+        // 更精確的斷言：寬度增加量應該接近我們拖曳的距離
+        // (注意：瀏覽器渲染可能有 sub-pixel 差異，所以不建議用 toBe(initial + 100))
+        expect(finalBox.width).toBeGreaterThan(initialBox.width + 50);
     });
 });
 

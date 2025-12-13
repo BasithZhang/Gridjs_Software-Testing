@@ -1,64 +1,56 @@
 import { test, expect } from "@playwright/test";
 
-const url = "http://localhost:3000/docs/examples/hello-world";
+const url = "http://localhost:3000/docs/examples/hidden-columns";
 
 test.describe("UI testing", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
-        await expect(page).toHaveURL(
-            "http://localhost:3000/docs/examples/hello-world",
-        );
+        await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: Hello, World!", async ({ page }) => {
+    test("Grab the h1 title: Hidden Columns", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "Hello, World!",
+            name: "Hidden Columns",
             level: 1,
         });
         await expect(title).toBeVisible();
-
-        await expect(title).toHaveText("Hello, World!");
+        await expect(title).toHaveText("Hidden Columns");
     });
 
-    /**
-     * 測試情境 1: 驗證表格結構與標頭
-     * 目標：確保表格欄位名稱 (Columns) 正確顯示
-     */
-    test("Should render table headers correctly", async ({ page }) => {
-        const table = page.locator("table.gridjs-table").first();
+    test("Click the link in the Note section", async ({ page }) => {
+        const link = page.getByRole("link", { name: "search plugin" });
+        await expect(link).toBeVisible();
 
-        // 驗證表格可見
-        await expect(table).toBeVisible();
+        await link.click();
 
-        // 驗證標頭文字與順序
-        // 根據官方範例，標頭應為: Name, Email, Phone Number
-        const headers = table.locator("th");
-        await expect(headers).toHaveText(["Name", "Email", "Phone Number"]);
+        await expect(page).toHaveURL(
+            "http://localhost:3000/docs/examples/search",
+        );
     });
 
-    /**
-     * 測試情境 2: 驗證資料內容
-     * 目標：檢查表格內的實際資料 (Rows & Cells) 是否與預期相符
-     */
-    test("Should display correct data in rows", async ({ page }) => {
-        const rows = page.locator("table.gridjs-table tbody tr");
+    test("Click the home page link", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Home page" });
+        await expect(link).toBeVisible();
 
-        // --- 驗證第一筆資料 (John) ---
-        const firstRowCells = rows.nth(0).locator("td");
-        await expect(firstRowCells.nth(0)).toHaveText("John");
-        await expect(firstRowCells.nth(1)).toHaveText("john@example.com");
-        await expect(firstRowCells.nth(2)).toHaveText("(353) 01 222 3333");
+        await link.click();
 
-        // --- 驗證第二筆資料 (Mark) ---
-        const secondRowCells = rows.nth(1).locator("td");
-        await expect(secondRowCells.nth(0)).toHaveText("Mark");
-        await expect(secondRowCells.nth(1)).toHaveText("mark@gmail.com");
-        await expect(secondRowCells.nth(2)).toHaveText("(01) 22 888 4444");
+        await expect(page).toHaveURL("http://localhost:3000");
+    });
 
-        // (可選) 驗證總筆數，確保沒有多餘或缺少的資料
-        // Hello World 範例通常有 2 筆或更多，視您的版本而定，這裡假設檢查前兩筆
-        await expect(rows.nth(0)).toBeVisible();
-        await expect(rows.nth(1)).toBeVisible();
+    test('Should hide "Name" column header', async ({ page }) => {
+        const headerCells = page.locator("table.gridjs-table thead th");
+
+        // 1. 驗證標頭數量
+        // 假設原始有 3 欄 (Name, Email, Phone)，隱藏 1 欄後應剩 2 欄
+        await expect(headerCells).toHaveCount(2);
+
+        // 2. 驗證標頭文字內容
+        // 確保 "Name" 不在其中，且順序正確 (Email 變成第一個)
+        await expect(headerCells).toHaveText(["Email", "Title"]);
+
+        // 3. 雙重確認 "Name" 標頭處於隱藏狀態 (或是根本未渲染)
+        const nameHeader = page.locator("th").filter({ hasText: "Name" });
+        await expect(nameHeader).toBeHidden();
     });
 });
 

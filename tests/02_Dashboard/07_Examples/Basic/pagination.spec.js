@@ -1,64 +1,79 @@
 import { test, expect } from "@playwright/test";
 
-const url = "http://localhost:3000/docs/examples/hello-world";
+const url = "http://localhost:3000/docs/examples/pagination";
 
 test.describe("UI testing", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
-        await expect(page).toHaveURL(
-            "http://localhost:3000/docs/examples/hello-world",
-        );
+        await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: Hello, World!", async ({ page }) => {
+    test("Grab the h1 title: Pagination", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "Hello, World!",
+            name: "pagination",
             level: 1,
         });
-        await expect(title).toBeVisible();
+        await expect(title).toBeVisible(title);
 
-        await expect(title).toHaveText("Hello, World!");
+        await expect(title).toHaveText("Pagination");
     });
 
-    /**
-     * 測試情境 1: 驗證表格結構與標頭
-     * 目標：確保表格欄位名稱 (Columns) 正確顯示
-     */
-    test("Should render table headers correctly", async ({ page }) => {
-        const table = page.locator("table.gridjs-table").first();
+    test("Check the home page link", async ({ page }) => {
+        const link = page.getByRole("link", { name: "Home page" });
+        await expect(link).toBeVisible();
 
-        // 驗證表格可見
-        await expect(table).toBeVisible();
+        await link.click();
 
-        // 驗證標頭文字與順序
-        // 根據官方範例，標頭應為: Name, Email, Phone Number
-        const headers = table.locator("th");
-        await expect(headers).toHaveText(["Name", "Email", "Phone Number"]);
+        await expect(page).toHaveURL("http://localhost:3000");
     });
 
-    /**
-     * 測試情境 2: 驗證資料內容
-     * 目標：檢查表格內的實際資料 (Rows & Cells) 是否與預期相符
-     */
-    test("Should display correct data in rows", async ({ page }) => {
-        const rows = page.locator("table.gridjs-table tbody tr");
+    test("When pagination is set to true", async ({ page }) => {
+        // Previous and Next page button should be exist
+        const previous = page.getByRole("button", { name: "Previous" }).nth(1);
+        const next = page.getByRole("button", { name: "Next" }).nth(1);
 
-        // --- 驗證第一筆資料 (John) ---
-        const firstRowCells = rows.nth(0).locator("td");
-        await expect(firstRowCells.nth(0)).toHaveText("John");
-        await expect(firstRowCells.nth(1)).toHaveText("john@example.com");
-        await expect(firstRowCells.nth(2)).toHaveText("(353) 01 222 3333");
+        await expect(previous).toBeVisible();
+        await expect(next).toBeVisible();
+    });
 
-        // --- 驗證第二筆資料 (Mark) ---
-        const secondRowCells = rows.nth(1).locator("td");
-        await expect(secondRowCells.nth(0)).toHaveText("Mark");
-        await expect(secondRowCells.nth(1)).toHaveText("mark@gmail.com");
-        await expect(secondRowCells.nth(2)).toHaveText("(01) 22 888 4444");
+    test("When pagination is set to false", async ({ page }) => {
+        const codeEditor = page
+            .locator("textarea.npm__react-simple-code-editor__textarea")
+            .first();
 
-        // (可選) 驗證總筆數，確保沒有多餘或缺少的資料
-        // Hello World 範例通常有 2 筆或更多，視您的版本而定，這裡假設檢查前兩筆
-        await expect(rows.nth(0)).toBeVisible();
-        await expect(rows.nth(1)).toBeVisible();
+        // 2. 準備新的配置代碼 (明確設定 pagination: false)
+        // 我們使用 "Fill + Type" 混合策略來確保編輯器觸發更新
+        const codeBody = `
+        new Grid({
+          columns: ['Name', 'Email', 'Phone Number'],
+          data: [
+            ['John', 'john@example.com', '(353) 01 222 3333'],
+            ['Mark', 'mark@gmail.com', '(01) 22 888 4444'],
+            ['Eoin', 'eo3n@yahoo.com', '(05) 10 878 5554'],
+            ['Nisen', 'nis900@gmail.com', '313 333 1923']
+          ],
+          pagination: false
+        })`.trim(); // 故意不加分號，留給 type 輸入
+
+        // 3. 操作編輯器：清空舊代碼
+        await codeEditor.click();
+        await codeEditor.focus();
+        const modifier = process.platform === "darwin" ? "Meta" : "Control";
+        await page.keyboard.press(`${modifier}+A`);
+        await page.keyboard.press("Backspace");
+
+        // 4. 輸入新代碼
+        // Step A: 快速填入主體
+        await codeEditor.fill(codeBody);
+        // Step B: 手動輸入結尾分號，強制觸發 Live Preview 重新渲染
+        await codeEditor.type(";", { delay: 100 });
+
+        // Previous and Next page button should not be exist
+        const previous = page.getByRole("button", { name: "Previous" }).nth(1);
+        const next = page.getByRole("button", { name: "Next" }).nth(1);
+
+        await expect(previous).not.toBeVisible();
+        await expect(next).not.toBeVisible();
     });
 });
 
