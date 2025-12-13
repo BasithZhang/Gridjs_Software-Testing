@@ -70,9 +70,6 @@ test.describe("UI testing", async () => {
             .locator("textarea.npm__react-simple-code-editor__textarea")
             .first();
 
-        // 2. 準備程式碼
-        // 我們將代碼拆成兩部分：「主體」與「結尾字符」
-        // 這樣做的目的是讓 Playwright 填入主體後，手動打入最後的字符，確保觸發 Live Editor 的執行事件
         const codeBody = `
         const grid = new Grid({
           columns: ['Name', 'Email', 'Phone Number'],
