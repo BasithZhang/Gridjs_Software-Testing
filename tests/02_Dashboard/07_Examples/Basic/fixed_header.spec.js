@@ -98,24 +98,49 @@ test.describe("Fixed Header example page", () => {
     test("header position sticks to container top on scroll", async ({
         page,
     }) => {
-        const container = page.locator(".gridjs-wrapper");
-        const header = page.locator(".gridjs-wrapper thead");
+        // 確保前往正確的頁面 (如果原本的 beforeAll 有寫可以省略)
+        // await page.goto('https://gridjs.io/docs/examples/fixed-header');
 
+        // 1. 鎖定容器
+        const container = page.locator(".gridjs-wrapper").first();
+
+        // 2. [修正關鍵] 鎖定 'th' 而非 'thead'
+        // Grid.js 的 sticky 屬性是寫在 th 上的
+        const headerCell = container.locator("th").first();
+
+        // 確保元素已載入
+        await headerCell.waitFor();
+
+        // 取得容器的 Top 座標
         const { top: cTop } = await container.evaluate((el) =>
             el.getBoundingClientRect(),
         );
-        const { top: hTopBefore } = await header.evaluate((el) =>
+
+        // 取得 Header Cell 捲動前的 Top 座標
+        const { top: hTopBefore } = await headerCell.evaluate((el) =>
             el.getBoundingClientRect(),
         );
 
+        // 執行捲動
         await container.evaluate((el) => {
             el.scrollTop = 250;
         });
 
-        const { top: hTopAfter } = await header.evaluate((el) =>
+        // [選擇性] 等待一下確保瀏覽器完成 layout update (通常 evaluate 是同步的，但保險起見)
+        // await page.waitForTimeout(100);
+
+        // 取得 Header Cell 捲動後的 Top 座標
+        const { top: hTopAfter } = await headerCell.evaluate((el) =>
             el.getBoundingClientRect(),
         );
+
+        // 驗證邏輯：
+        // 1. 捲動前，Header 應該貼齊 Container (誤差 < 3px)
         expect(Math.abs(hTopBefore - cTop)).toBeLessThan(3);
+
+        // 2. 捲動後，因為 sticky 的關係，Header 應該"視覺上"還是貼齊 Container
+        // 如果是普通元素，這裡的差值會接近 250 (因為捲走了)
+        // 但因為它是 sticky，這裡的差值應該還是接近 0
         expect(Math.abs(hTopAfter - cTop)).toBeLessThan(3);
     });
 });

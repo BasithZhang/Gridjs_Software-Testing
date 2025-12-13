@@ -36,6 +36,22 @@ test.describe("UI testing", async () => {
 
         await expect(page).toHaveURL("http://localhost:3000");
     });
+
+    test('Should hide "Name" column header', async ({ page }) => {
+        const headerCells = page.locator("table.gridjs-table thead th");
+
+        // 1. 驗證標頭數量
+        // 假設原始有 3 欄 (Name, Email, Phone)，隱藏 1 欄後應剩 2 欄
+        await expect(headerCells).toHaveCount(2);
+
+        // 2. 驗證標頭文字內容
+        // 確保 "Name" 不在其中，且順序正確 (Email 變成第一個)
+        await expect(headerCells).toHaveText(["Email", "Title"]);
+
+        // 3. 雙重確認 "Name" 標頭處於隱藏狀態 (或是根本未渲染)
+        const nameHeader = page.locator("th").filter({ hasText: "Name" });
+        await expect(nameHeader).toBeHidden();
+    });
 });
 
 test.describe("All links on the blog page", async () => {

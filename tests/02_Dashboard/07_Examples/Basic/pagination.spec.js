@@ -36,7 +36,45 @@ test.describe("UI testing", async () => {
         await expect(next).toBeVisible();
     });
 
-    // test("When pagination is set to false", async ({ page }) => {});
+    test("When pagination is set to false", async ({ page }) => {
+        const codeEditor = page
+            .locator("textarea.npm__react-simple-code-editor__textarea")
+            .first();
+
+        // 2. 準備新的配置代碼 (明確設定 pagination: false)
+        // 我們使用 "Fill + Type" 混合策略來確保編輯器觸發更新
+        const codeBody = `
+        new Grid({
+          columns: ['Name', 'Email', 'Phone Number'],
+          data: [
+            ['John', 'john@example.com', '(353) 01 222 3333'],
+            ['Mark', 'mark@gmail.com', '(01) 22 888 4444'],
+            ['Eoin', 'eo3n@yahoo.com', '(05) 10 878 5554'],
+            ['Nisen', 'nis900@gmail.com', '313 333 1923']
+          ],
+          pagination: false
+        })`.trim(); // 故意不加分號，留給 type 輸入
+
+        // 3. 操作編輯器：清空舊代碼
+        await codeEditor.click();
+        await codeEditor.focus();
+        const modifier = process.platform === "darwin" ? "Meta" : "Control";
+        await page.keyboard.press(`${modifier}+A`);
+        await page.keyboard.press("Backspace");
+
+        // 4. 輸入新代碼
+        // Step A: 快速填入主體
+        await codeEditor.fill(codeBody);
+        // Step B: 手動輸入結尾分號，強制觸發 Live Preview 重新渲染
+        await codeEditor.type(";", { delay: 100 });
+
+        // Previous and Next page button should not be exist
+        const previous = page.getByRole("button", { name: "Previous" }).nth(1);
+        const next = page.getByRole("button", { name: "Next" }).nth(1);
+
+        await expect(previous).not.toBeVisible();
+        await expect(next).not.toBeVisible();
+    });
 });
 
 test.describe("All links on the blog page", async () => {

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 const url = "http://localhost:3000/docs/examples/from";
 
-test.describe("Grab the title", async () => {
+test.describe("UI testing", async () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(url);
         await expect(page).toHaveURL(url);
@@ -16,6 +16,26 @@ test.describe("Grab the title", async () => {
         await expect(title).toBeVisible();
 
         await expect(title).toHaveText("From HTML Table");
+    });
+
+    test("Should import data correctly from existing HTML table", async ({
+        page,
+    }) => {
+        const gridContainer = page.locator(".gridjs-container").first();
+        const rows = gridContainer.locator("table.gridjs-table tbody tr");
+
+        // 1. 驗證資料筆數 (範例中預設有 2 筆：John 和 Mike)
+        await expect(rows).toHaveCount(2);
+
+        // 2. 驗證第一筆資料 (John)
+        await expect(rows.nth(0)).toContainText("John");
+        await expect(rows.nth(0)).toContainText("john@example.com");
+
+        // 3. 驗證第二筆資料 (Mike)
+        // 注意：範例中的 Mike Email 包含 <b> 標籤，Grid.js 預設可能會保留 HTML 或純文字
+        // 我們檢查文字內容是否存在即可
+        await expect(rows.nth(1)).toContainText("Mike");
+        await expect(rows.nth(1)).toContainText("mike@example.com");
     });
 });
 
