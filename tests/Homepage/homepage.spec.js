@@ -5,8 +5,8 @@ const BASE = 'http://localhost:3000/';
 test.describe('Grid.js Homepage E2E Tests', () => {
 
 	test.beforeEach(async ({ page }) => {
-		// await page.goto('https://gridjs.io/');
-		await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+		await page.goto('https://gridjs.io/');
+		// await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 		await page.waitForLoadState('networkidle');
 	});
 
@@ -369,6 +369,9 @@ test.describe('Grid.js Homepage E2E Tests', () => {
 
 			const stackOverflowLink = page.locator('div.bg-gray-800 a:has-text("StackOverflow")');
 			await expect(stackOverflowLink).toBeVisible();
+			await stackOverflowLink.click();
+			await page.waitForLoadState('networkidle');
+			expect(page.url()).toContain('stackoverflow.com');
 		});
 	});
 
