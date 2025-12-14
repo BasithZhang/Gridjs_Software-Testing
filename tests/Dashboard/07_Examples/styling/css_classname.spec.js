@@ -8,14 +8,14 @@ test.describe("Grab the title", async () => {
         await expect(page).toHaveURL(url);
     });
 
-    test("1. Grab the h1 title: CSS Classname", async ({ page }) => {
+    test("1. Grab the h1 title: CSS ClassName", async ({ page }) => {
         const title = page.getByRole("heading", {
-            name: "CSS Classname",
+            name: "CSS ClassName",
             level: 1,
         });
         await expect(title).toBeVisible();
 
-        await expect(title).toHaveText("CSS Classname");
+        await expect(title).toHaveText("CSS ClassName");
     });
 });
 

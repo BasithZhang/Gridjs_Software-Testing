@@ -64,51 +64,64 @@ test.describe("UI testing", async () => {
         ).toBeHidden();
     });
 
-    test("When search is set to false", async ({ page }) => {
-        // 1. 定位編輯器
+    test("Demo: Change search from true to false (JS Version)", async ({
+        page,
+    }) => {
+        // 1. 定位編輯器 (確保是第一個可見的編輯器)
         const codeEditor = page
             .locator("textarea.npm__react-simple-code-editor__textarea")
             .first();
 
-        const codeBody = `
-        const grid = new Grid({
-          columns: ['Name', 'Email', 'Phone Number'],
-          search: false,
-          data: [
-            ['John', 'john@example.com', '(353) 01 222 3333'],
-            ['Mark', 'mark@gmail.com', '(01) 22 888 4444'],
-            ['Eoin', 'eo3n@yahoo.com', '(05) 10 878 5554'],
-            ['Nisen', 'nis900@gmail.com', '313 333 1923']
-          ]
-        })`.trim(); // 注意：這裡故意拿掉最後的分號與右括號
+        // 確保編輯器已經載入
+        await codeEditor.waitFor({ state: "visible" });
 
-        // 3. 操作編輯器
-        await codeEditor.click();
-        await codeEditor.focus();
+        // 2. 取得編輯器目前的程式碼內容
+        const originalCode = await codeEditor.inputValue();
 
-        // 清空舊內容
-        const modifier = process.platform === "darwin" ? "Meta" : "Control";
-        await page.keyboard.press(`${modifier}+A`);
+        // 3. 尋找 "search: true" 關鍵字的結束位置
+        // 我們要找的是 'true' 這個字結束的地方，這樣游標才能放在它的後面
+        // 注意：這裡使用正則表達式來處理可能存在的空白 (search: true 或 search:true)
+        const match = originalCode.match(/search:\s*true/);
+
+        if (!match) {
+            throw new Error(
+                "在編輯器中找不到 'search: true'，請確認範例程式碼是否正確",
+            );
+        }
+
+        // 計算游標應該要在的位置： (匹配到的起始 index) + (匹配到的字串長度)
+        // 例如 "search: true" 長度是 12，游標就會定在 true 的後面
+        const cursorPosition = match.index + match[0].length;
+
+        await codeEditor.evaluate((node, pos) => {
+            // node 就是那個 textarea 元素
+            node.setSelectionRange(pos, pos); // 將游標設定到指定位置
+            node.focus(); // 確保編輯器獲得焦點
+        }, cursorPosition);
+
+        // 5. 模擬真人動作：刪除 "true"
+        // "true" 有 4 個字元，所以按 4 次 Backspace
+        // delay: 100 讓影片看起來像真人在刪除
+        for (let i = 0; i < 4; i++) {
+            await page.keyboard.press("Backspace", { delay: 100 });
+        }
+
+        // 6. 模擬真人動作：輸入 "false"
+        await page.keyboard.type("false", { delay: 100 });
+
+        await page.waitForTimeout(10000); // 停頓一下讓觀眾看到 false
+        await page.keyboard.press("Space");
         await page.keyboard.press("Backspace");
 
-        // 4. 混合輸入策略
-        // Step A: 使用 fill 快速填入主體 (保持格式整齊，不會觸發自動縮排混亂)
-        await codeEditor.fill(codeBody);
-
-        // Step B: 手動輸入結尾符號 (模擬真實打字，強制觸發編輯器的 Run/Compile)
-        // 我們輸入最後的 "; " (分號與空格)，這能確保語法封閉並觸發更新
-        await codeEditor.type(";", { delay: 100 });
-
-        // 5. 驗證結果
+        // 8. 驗證結果
         const firstGridContainer = page.locator(".gridjs-container").first();
-        const searchInput = firstGridContainer.locator(
-            "input.gridjs-search-input",
-        );
 
-        // 斷言：Search Box 應該消失 (search: false)
-        await expect(searchInput).toBeHidden();
+        // 斷言：搜尋框應該消失
+        await expect(
+            firstGridContainer.locator("input.gridjs-search-input"),
+        ).toBeHidden();
 
-        // 斷言：表格本身應該還在 (確認程式碼有效且已渲染)
+        // 斷言：表格應該還活著 (沒有因為報錯而消失)
         await expect(
             firstGridContainer.locator("table.gridjs-table"),
         ).toBeVisible();
