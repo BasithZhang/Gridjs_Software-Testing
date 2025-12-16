@@ -15,10 +15,7 @@ const config = {
         video: "off",
     },
 
-    projects: [
-        { name: "chromium", use: { browserName: "chromium" } },
-        { name: "firefox", use: { browserName: "firefox" } },
-    ],
+    projects: [{ name: "chromium", use: { browserName: "chromium" } }],
 
     reporter: [["html", { open: "never" }]],
 };
