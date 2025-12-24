@@ -81,8 +81,6 @@ This approach prevents flaky tests while remaining faithful to real user interac
 ### Installation
 Clone the Grid.js repository and install all required dependencies:
 
-### Installation
-
 ```
 $ npm install
 ```
